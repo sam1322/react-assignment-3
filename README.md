@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## This project is deployed on [Vercel](https://react-assignment-3-5wtuyiktu-sam1322s-projects.vercel.app/)
+
 ## Getting Started
 
 First, run the development server:
