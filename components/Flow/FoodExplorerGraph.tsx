@@ -52,6 +52,11 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
     [setEdges]
   );
 
+  function extractNumber(str: string) {
+    const match = str.match(/^(\d+)_/);
+    return match ? parseInt(match[1]) : 0;
+  }
+
   const addNodes = (
     parentNode: Node,
     newNodes: CustomNodeData[],
@@ -71,6 +76,8 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
       ((newNodes.length - 1) * 60) / 2 +
       offsetY;
 
+    const currentLevel = extractNumber(parentNode.id);
+
     console.log("add new nodes", Date.now().toLocaleString());
     // console.log(newNodes, "new nodes");
     // console.log(parentNode, "parent new node");
@@ -89,16 +96,19 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         (node) =>
           !currentNodes.some(
             (existingNode) =>
-              existingNode.id === `${parentNode.id}-${node.label}`
+              existingNode.id ===
+              `${currentLevel}_${parentNode.data.label}-${node.label}`
+            // existingNode.id === `${parentNode.id}-${node.label}`
             // existingNode.id === `${node.label}`
           )
       )
       .map((node, index) => ({
-        id: `${parentNode.id}-${node.label}`,
+        id: `${currentLevel + 1}_${parentNode.data.label}-${node.label}`,
+        // id: `${parentNode.id}-${node.label}`,
         // id: `${node.label}`,
         type: "custom",
         data: node,
-        position: { x, y: y + index * 60 },
+        position: { x, y: y + index * 90 },
       }));
 
     const newEdges = createdNodes.map((node) => ({
@@ -110,18 +120,39 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
       },
     }));
 
-    console.log("new edges2", newEdges, Date.now().toLocaleString());
+    // console.log("new edges2", newEdges, Date.now().toLocaleString());
+
+    //before adding we will check if there are any existing nodes in the same level if yes we will remove them
+    // const filteredNodes = currentNodes.filter(
+    //   (node) => extractNumber(node.id) > currentLevel
+    // );
 
     // @ts-expect-error - fix this type error later
-    setNodes((nds) => [...nds, ...createdNodes]);
+    setNodes((nds) => {
+      // console.log("previous nodes", nds);
+      const filteredNodes = nds.filter(
+        (node) => extractNumber(node.id) <= currentLevel
+      );
+      // console.log("filtered nodes", filteredNodes, currentLevel);
+
+      return [
+        // ...nds
+        ...filteredNodes,
+        ...createdNodes,
+      ];
+    });
     setEdges((eds) => {
       let filteredEdges = newEdges.filter(
         (edge) => !eds.some((existingEdge) => existingEdge.id === edge.id)
       );
+      // TODO: implement a clean up function for the previous existing nodes on the current level before adding new edges
 
       return [...eds, ...filteredEdges];
     });
   };
+
+  // console.log("nodes", nodes);
+  // console.log("edges", edges);
 
   const handleExploreClick = useCallback(async () => {
     // const categoryNodes = mockCategories.map((category) => ({
@@ -162,14 +193,15 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         return cur;
       });
 
-      const viewMealNode = currentNodes.find(
-        (node) => node.data.label === "View Meals"
-      );
+      //checking if the node already exists
+      // const viewMealNode = currentNodes.find(
+      //   (node) => node.data.label === "View Meals"
+      // );
 
-      if (viewMealNode) {
-        console.log("viewMealNode already added", viewMealNode);
-        return;
-      }
+      // if (viewMealNode) {
+      //   console.log("viewMealNode already added", viewMealNode);
+      //   return;
+      // }
 
       const parentNode = currentNodes.find(
         (node) => node.data.label === category
@@ -433,7 +465,7 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
   useEffect(() => {
     setNodes([
       {
-        id: "start",
+        id: "0_start",
         type: "custom",
         data: {
           label: "Explore",
@@ -464,8 +496,8 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
           <Background />
         </ReactFlow>
       </div>
-      hey
-      <Button onClick={() => setOpenSidebar(!openSidebar)}>Open SideBar</Button>
+      {/* hey
+      <Button onClick={() => setOpenSidebar(!openSidebar)}>Open SideBar</Button> */}
       <MealDetailsSidebar
         // data={mockMealDetails}
         data={mealDetails}

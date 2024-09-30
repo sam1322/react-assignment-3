@@ -89,24 +89,32 @@ const MealDetailsSidebar: FC<MealDetailsSidebarProps> = ({
             <div className="opacity-80">{strCategory}</div>
             <div className="font-semibold text-zinc-500">Area</div>
             <div>{strArea}</div>
-            <div className="font-semibold text-zinc-500">Youtube</div>
-            <Link
-              href={strYoutube}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline  break-words"
-            >
-              {strYoutube}
-            </Link>
-            <div className="font-semibold text-zinc-500">Recipe</div>
-            <Link
-              href={strSource}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline break-words"
-            >
-              <p>{strSource}</p>
-            </Link>
+            {strYoutube && strYoutube?.trim() != "" && (
+              <>
+                <div className="font-semibold text-zinc-500">Youtube</div>
+                <Link
+                  href={strYoutube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline  break-words"
+                >
+                  {strYoutube}
+                </Link>
+              </>
+            )}
+            {strSource && strSource?.trim() != "" && (
+              <>
+                <div className="font-semibold text-zinc-500">Recipe</div>
+                <Link
+                  href={strSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline break-words"
+                >
+                  <p>{strSource}</p>
+                </Link>
+              </>
+            )}
           </div>
           <div className="border border-black p-4 mt-3 max-h-[33%] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Instructions</h3>
