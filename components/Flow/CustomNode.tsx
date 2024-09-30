@@ -1,18 +1,25 @@
+"use client";
+import { CustomNodeData } from "@/lib/types";
 import { Handle, Position } from "@xyflow/react";
-import { FC } from "react";
+import { FC, useState } from "react";
+
+// interface CustomNodeProps {
+//   data: {
+//     label: string;
+//     type: "explore" | "category" | "option" | "meal" | "ingredient" | "tag";
+//     id: string;
+//     parentId: string;
+//     onClick?: () => void;
+//   };
+// }
 
 interface CustomNodeProps {
-  data: {
-    label: string;
-    type: "explore" | "category" | "option" | "meal" | "ingredient" | "tag";
-    id: string;
-    parentId: string;
-    onClick?: () => void;
-  };
+  data: CustomNodeData;
 }
 
 const CustomNode: FC<CustomNodeProps> = ({ data }) => {
   const { label, type, id, parentId, onClick } = data;
+  const [state, setState] = useState(0);
   const nodeStyle = {
     explore: "bg-gray-300 text-black",
     category: "bg-red-500 text-white",
@@ -20,6 +27,18 @@ const CustomNode: FC<CustomNodeProps> = ({ data }) => {
     meal: "bg-blue-400 text-white",
     ingredient: "bg-purple-400 text-white",
     tag: "bg-purple-400 text-white",
+  };
+
+  const handleOnClick = () => {
+    setState((prev) => {
+      if (prev === 0 && typeof onClick === "function") {
+        onClick();
+        return 1;
+      } else {
+        console.log("already added");
+      }
+      return prev;
+    });
   };
 
   return (
@@ -40,7 +59,8 @@ const CustomNode: FC<CustomNodeProps> = ({ data }) => {
       />
       <div
         className={`p-2 rounded-md ${nodeStyle[data.type]} cursor-pointer`}
-        onClick={data.onClick}
+        onClick={handleOnClick}
+        // onClick={data.onClick}
       >
         {data.label}
       </div>
