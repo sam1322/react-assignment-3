@@ -2,26 +2,24 @@
 import { CustomNodeData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Handle, Position } from "@xyflow/react";
-import { ArrowBigRightDashIcon, CircleStopIcon, FeatherIcon, GlobeIcon, Music2Icon } from "lucide-react";
+import {
+  ArrowBigRightDashIcon,
+  CircleStopIcon,
+  FeatherIcon,
+  GlobeIcon,
+  Music2Icon,
+} from "lucide-react";
 import { FC, useState } from "react";
-
-// interface CustomNodeProps {
-//   data: {
-//     label: string;
-//     type: "explore" | "category" | "option" | "meal" | "ingredient" | "tag";
-//     id: string;
-//     parentId: string;
-//     onClick?: () => void;
-//   };
-// }
 
 interface CustomNodeProps {
   data: CustomNodeData;
 }
 
 const CustomNode: FC<CustomNodeProps> = ({ data }) => {
-  const { label, type, id, parentId, onClick } = data;
-  const [state, setState] = useState(0);
+  // const { label, type, id, parentId, onClick } = data;
+  const { type, onClick } = data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setState] = useState(0);
   const nodeStyle = {
     explore: "bg-white text-black p-4",
     category: "bg-white text-black p-4",
@@ -81,13 +79,6 @@ const CustomNode: FC<CustomNodeProps> = ({ data }) => {
 
   return (
     <div>
-      {/* <Handle
-        type={data?.type == "explore" ? "source" : "target"}
-        position={data?.type == "explore" ? Position.Right : Position.Left}
-        style={{ background: "#555" }}
-        onConnect={(params) => console.log("handle onConnect", params)}
-        isConnectable={true}
-      /> */}
       <Handle
         type={"target"}
         position={Position.Left}
@@ -103,7 +94,6 @@ const CustomNode: FC<CustomNodeProps> = ({ data }) => {
         )}
         onClick={handleOnClick}
         title={data.label}
-        // onClick={data.onClick}
       >
         <div
           className={`p-1 rounded-md ${iconStyle[data.type]} cursor-pointer`}
@@ -117,7 +107,6 @@ const CustomNode: FC<CustomNodeProps> = ({ data }) => {
         type={"source"}
         position={Position.Right}
         style={{ background: "transparent", border: "none" }}
-        // style={{ background: "#555" }}
         onConnect={(params) => console.log("handle onConnect", params)}
         isConnectable={true}
       />

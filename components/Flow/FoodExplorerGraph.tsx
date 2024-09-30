@@ -1,9 +1,16 @@
 "use client";
-import { FC, useCallback, useEffect, useState } from "react";
-import CustomNode from "./CustomNode";
+import { mockCategories } from "@/lib/constants";
+import {
+  CategoryData,
+  CustomNodeData,
+  MealByCategoryData,
+  MealData,
+} from "@/lib/types";
+
 import {
   addEdge,
   Background,
+  Connection,
   ConnectionLineType,
   Controls,
   Edge,
@@ -15,13 +22,10 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { mockCategories, mockMealDetails, mockMeals } from "@/lib/constants";
-import { CustomNodeData } from "@/lib/types";
 import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
+import CustomNode from "./CustomNode";
 import MealDetailsSidebar from "./MealDetailsSidebar";
-import { Button } from "../ui/button";
-
-interface FoodExplorerGraphProps {}
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -37,18 +41,18 @@ type CustomNode = {
   };
 };
 
-const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
+const FoodExplorerGraph = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
   const [openSidebar, setOpenSidebar] = useState(false);
-  const [mealDetails, setMealDetails] = useState<any>(null);
+  const [mealDetails, setMealDetails] = useState<MealData | null>(null);
 
   const onCloseSideBar = () => {
     setOpenSidebar(false);
   };
 
   const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
@@ -142,7 +146,7 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
       ];
     });
     setEdges((eds) => {
-      let filteredEdges = newEdges.filter(
+      const filteredEdges = newEdges.filter(
         (edge) => !eds.some((existingEdge) => existingEdge.id === edge.id)
       );
       // TODO: implement a clean up function for the previous existing nodes on the current level before adding new edges
@@ -253,69 +257,59 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
           type: "meal" as const,
           onClick: () => {
             console.log("meal", meal);
-            handleMealClick(meal, parentNode);
+            handleMealClick(meal);
           },
           id: meal.id,
           parentId: "View Meals",
         }));
-        // const mealNodes = mockMeals[category as keyof typeof mockMeals].map(
-        //   (meal) => ({
-        //     label: meal,
-        //     type: "meal" as const,
-        //     // onClick: () => handleMealClick(meal, parentNode),
-        //   })
-        // );
         addNodes(parentNode, mealNodes);
       }
     },
     [nodes]
   );
 
-  const handleMealClick = useCallback(
-    (meal: { name: string; id: string }, parentNode1: Node) => {
-      const optionNodes = [
-        {
-          label: "View Ingredients",
-          type: "option" as const,
-          parentId: meal.name,
-          id: "View Ingredients",
-          onClick: () => handleViewIngredientsClick(meal),
-        },
-        {
-          label: "View Tags",
-          type: "option" as const,
-          parentId: meal.name,
-          id: "View Tags",
-          onClick: () => handleViewTagsClick(meal),
-        },
-        {
-          label: "View Details",
-          type: "option" as const,
-          parentId: meal.name,
-          id: "View Details",
-          onClick: () => handleViewDetailsClick(meal),
-        },
-      ];
+  const handleMealClick = useCallback((meal: { name: string; id: string }) => {
+    const optionNodes = [
+      {
+        label: "View Ingredients",
+        type: "option" as const,
+        parentId: meal.name,
+        id: "View Ingredients",
+        onClick: () => handleViewIngredientsClick(meal),
+      },
+      {
+        label: "View Tags",
+        type: "option" as const,
+        parentId: meal.name,
+        id: "View Tags",
+        onClick: () => handleViewTagsClick(meal),
+      },
+      {
+        label: "View Details",
+        type: "option" as const,
+        parentId: meal.name,
+        id: "View Details",
+        onClick: () => handleViewDetailsClick(meal),
+      },
+    ];
 
-      let currentNodes = [] as Node[];
-      setNodes((cur) => {
-        currentNodes = [...cur];
-        return currentNodes;
-      });
+    let currentNodes = [] as Node[];
+    setNodes((cur) => {
+      currentNodes = [...cur];
+      return currentNodes;
+    });
 
-      const parentNode = currentNodes.find(
-        (node) => node.data.label === meal.name
-      );
+    const parentNode = currentNodes.find(
+      (node) => node.data.label === meal.name
+    );
 
-      console.log("parent node", parentNode, currentNodes, meal);
+    console.log("parent node", parentNode, currentNodes, meal);
 
-      if (parentNode) {
-        console.log("parent node inside", parentNode, optionNodes);
-        addNodes(parentNode, optionNodes, 130);
-      }
-    },
-    []
-  );
+    if (parentNode) {
+      console.log("parent node inside", parentNode, optionNodes);
+      addNodes(parentNode, optionNodes, 130);
+    }
+  }, []);
 
   const handleViewIngredientsClick = useCallback(
     async (meal: { name: string; id: string }) => {
@@ -422,10 +416,10 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         "https://www.themealdb.com/api/json/v1/1/categories.php"
       );
       const data = result.data;
-      const categories = data.categories as any[];
+      const categories = data.categories as CategoryData[];
       return categories
         .slice(0, 5)
-        .map((category: any) => category.strCategory);
+        .map((category: CategoryData) => category.strCategory);
     } catch (err) {
       console.error(err);
     }
@@ -438,10 +432,11 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`
       );
       const data = result.data;
-      const meals = data.meals as any[];
-      return meals
-        .slice(0, 5)
-        .map((meal: any) => ({ name: meal.strMeal, id: meal.idMeal }));
+      const meals = data.meals as MealByCategoryData[];
+      return meals.slice(0, 5).map((meal: MealByCategoryData) => ({
+        name: meal.strMeal,
+        id: meal.idMeal,
+      }));
     } catch (err) {
       console.error(err);
     }
@@ -454,7 +449,7 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`
       );
       const data = result.data;
-      const meal = data.meals[0] as any;
+      const meal = data.meals[0] as MealData;
       return meal;
     } catch (err) {
       console.error(err);
@@ -487,7 +482,6 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          // @ts-ignore
           nodeTypes={nodeTypes}
           connectionLineType={ConnectionLineType.SmoothStep}
         >
@@ -504,20 +498,6 @@ const FoodExplorerGraph: FC<FoodExplorerGraphProps> = ({}) => {
         open={openSidebar}
         onClose={onCloseSideBar}
       />
-      {/* {showSidebar && (
-        <div className="w-64 bg-gray-100 p-4 overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">{selectedMeal}</h2>
-            <button
-              onClick={closeSidebar}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <XCircle size={24} />
-            </button>
-          </div>
-          <p>{mockMealDetails}</p>
-        </div>
-      )} */}
     </div>
   );
 };

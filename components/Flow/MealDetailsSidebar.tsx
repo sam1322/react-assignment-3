@@ -1,21 +1,18 @@
-import { FC } from "react";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
-  SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
-import Image from "next/image";
+import { MealData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import Link from "next/link";
-import { buttonVariants } from "../ui/button";
+import { FC } from "react";
+
 
 interface MealDetailsSidebarProps {
-  data: any;
+  data: MealData | null;
   open: boolean;
   onClose: () => void;
 }
@@ -25,6 +22,8 @@ const MealDetailsSidebar: FC<MealDetailsSidebarProps> = ({
   open,
   onClose,
 }) => {
+  if (!data) return null;
+
   const strMeal = data?.strMeal;
   const strYoutube = data?.strYoutube;
   const strArea = data?.strArea;
@@ -34,7 +33,6 @@ const MealDetailsSidebar: FC<MealDetailsSidebarProps> = ({
 
   const ingredientList = [];
   // console.log("mealDetails", mealDetails);
-  if (!data) return null;
   for (let i = 1; i <= 20; i++) {
     const ingredient = data[`strIngredient${i}`];
     if (ingredient && ingredient.trim() !== "") {
