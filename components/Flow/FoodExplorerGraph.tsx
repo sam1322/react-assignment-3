@@ -272,7 +272,7 @@ const FoodExplorerGraph = () => {
   );
 
   const handleViewMealsByIngredientClick = useCallback(
-    async (ingredient: string) => {
+    async (ingredient: string, parentId: string) => {
       let currentNodes = [] as Node[];
       setNodes((cur) => {
         currentNodes = [...cur];
@@ -280,7 +280,7 @@ const FoodExplorerGraph = () => {
       });
 
       const parentNode = currentNodes.find(
-        (node) => node.data.label === ingredient
+        (node) => node.id === parentId
         // (node) => node.data.label === "View Meals"
         // && node.id.startsWith(`${category}-`)
       );
@@ -372,8 +372,9 @@ const FoodExplorerGraph = () => {
         type: "ingredient" as const,
         id: ingredient,
         parentId: meal.name,
-        onClick: () => handleViewMealsByIngredientClick(ingredient),
-      }));
+        onClick: (id: string) =>
+          handleViewMealsByIngredientClick(ingredient, id),
+      })) as CustomNodeData[];
       console.log("ingredientList", ingredientList);
       console.log("ingredientNodes", ingredientNodes);
 
