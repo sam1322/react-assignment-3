@@ -17,7 +17,7 @@ interface CustomNodeProps {
 
 const CustomNode: FC<CustomNodeProps> = ({ data }) => {
   // const { label, type, id, parentId, onClick } = data;
-  const { type, onClick, id, parentId, nodeId } = data;
+  const { type, onClick, parentId, nodeId } = data;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setState] = useState(0);
   const nodeStyle = {

@@ -255,16 +255,16 @@ const FoodExplorerGraph = () => {
           name: string;
           id: string;
         }[];
+
         const mealNodes = mealsList.map((meal) => ({
           label: meal.name,
           type: "meal" as const,
           onClick: (nodeId: string) => {
-            console.log("meal", meal, nodeId);
             handleMealClick(meal, nodeId);
           },
           id: meal.id,
           parentId: "View Meals",
-        }));
+        })) as CustomNodeData[];
         addNodes(parentNode, mealNodes);
       }
     },
@@ -299,7 +299,7 @@ const FoodExplorerGraph = () => {
           },
           id: meal.id,
           parentId: "View Meals",
-        }));
+        })) as CustomNodeData[];
         addNodes(parentNode, mealNodes);
       }
     },
@@ -321,7 +321,7 @@ const FoodExplorerGraph = () => {
           type: "option" as const,
           parentId: meal.name,
           id: "View Tags",
-          onClick: () => handleViewTagsClick(meal),
+          onClick: (id: string) => handleViewTagsClick(meal, id),
         },
         {
           label: "View Details",
@@ -330,7 +330,7 @@ const FoodExplorerGraph = () => {
           id: "View Details",
           onClick: () => handleViewDetailsClick(meal),
         },
-      ];
+      ] as CustomNodeData[];
 
       let currentNodes = [] as Node[];
       setNodes((cur) => {
@@ -397,7 +397,7 @@ const FoodExplorerGraph = () => {
   );
 
   const handleViewTagsClick = useCallback(
-    async (meal: { name: string; id: string }) => {
+    async (meal: { name: string; id: string }, parentId: string) => {
       const mealDetails = await getMealDetails(meal.id);
       if (!mealDetails) {
         console.error("No meal details found");
@@ -425,7 +425,7 @@ const FoodExplorerGraph = () => {
       });
 
       const optionNode = currentNodes.find(
-        (node) => node.data.label === "View Tags"
+        (node) => node.id === parentId
         // node.id.startsWith(`${parentNode.id}-`)
       );
 
