@@ -111,7 +111,11 @@ const FoodExplorerGraph = () => {
         // id: `${parentNode.id}-${node.label}`,
         // id: `${node.label}`,
         type: "custom",
-        data: node,
+        data: {
+          ...node,
+          parentId: parentNode.id,
+          nodeId: `${currentLevel + 1}_${parentNode.data.label}-${node.label}`,
+        },
         position: { x, y: y + index * 90 },
       }));
 
@@ -131,7 +135,6 @@ const FoodExplorerGraph = () => {
     //   (node) => extractNumber(node.id) > currentLevel
     // );
 
-    // @ts-expect-error - fix this type error later
     setNodes((nds) => {
       // console.log("previous nodes", nds);
       const filteredNodes = nds.filter(
@@ -255,9 +258,9 @@ const FoodExplorerGraph = () => {
         const mealNodes = mealsList.map((meal) => ({
           label: meal.name,
           type: "meal" as const,
-          onClick: () => {
-            console.log("meal", meal);
-            handleMealClick(meal);
+          onClick: (nodeId: string) => {
+            console.log("meal", meal, nodeId);
+            handleMealClick(meal, nodeId);
           },
           id: meal.id,
           parentId: "View Meals",
@@ -268,51 +271,87 @@ const FoodExplorerGraph = () => {
     [nodes]
   );
 
-  const handleMealClick = useCallback((meal: { name: string; id: string }) => {
-    const optionNodes = [
-      {
-        label: "View Ingredients",
-        type: "option" as const,
-        parentId: meal.name,
-        id: "View Ingredients",
-        onClick: () => handleViewIngredientsClick(meal),
-      },
-      {
-        label: "View Tags",
-        type: "option" as const,
-        parentId: meal.name,
-        id: "View Tags",
-        onClick: () => handleViewTagsClick(meal),
-      },
-      {
-        label: "View Details",
-        type: "option" as const,
-        parentId: meal.name,
-        id: "View Details",
-        onClick: () => handleViewDetailsClick(meal),
-      },
-    ];
+  const handleViewMealsByIngredientClick = useCallback(
+    async (ingredient: string) => {
+      let currentNodes = [] as Node[];
+      setNodes((cur) => {
+        currentNodes = [...cur];
+        return currentNodes;
+      });
 
-    let currentNodes = [] as Node[];
-    setNodes((cur) => {
-      currentNodes = [...cur];
-      return currentNodes;
-    });
+      const parentNode = currentNodes.find(
+        (node) => node.data.label === ingredient
+        // (node) => node.data.label === "View Meals"
+        // && node.id.startsWith(`${category}-`)
+      );
 
-    const parentNode = currentNodes.find(
-      (node) => node.data.label === meal.name
-    );
+      if (parentNode) {
+        const mealsList = (await getMealsByIngredient(ingredient)) as {
+          name: string;
+          id: string;
+        }[];
+        const mealNodes = mealsList.map((meal) => ({
+          label: meal.name,
+          type: "meal" as const,
+          onClick: (nodeId: string) => {
+            console.log("meal", meal);
+            handleMealClick(meal, nodeId);
+          },
+          id: meal.id,
+          parentId: "View Meals",
+        }));
+        addNodes(parentNode, mealNodes);
+      }
+    },
+    [nodes]
+  );
 
-    console.log("parent node", parentNode, currentNodes, meal);
+  const handleMealClick = useCallback(
+    (meal: { name: string; id: string }, parentId: string) => {
+      const optionNodes = [
+        {
+          label: "View Ingredients",
+          type: "option" as const,
+          parentId: meal.name,
+          id: "View Ingredients",
+          onClick: (id: string) => handleViewIngredientsClick(meal, id),
+        },
+        {
+          label: "View Tags",
+          type: "option" as const,
+          parentId: meal.name,
+          id: "View Tags",
+          onClick: () => handleViewTagsClick(meal),
+        },
+        {
+          label: "View Details",
+          type: "option" as const,
+          parentId: meal.name,
+          id: "View Details",
+          onClick: () => handleViewDetailsClick(meal),
+        },
+      ];
 
-    if (parentNode) {
-      console.log("parent node inside", parentNode, optionNodes);
-      addNodes(parentNode, optionNodes, 130);
-    }
-  }, []);
+      let currentNodes = [] as Node[];
+      setNodes((cur) => {
+        currentNodes = [...cur];
+        return currentNodes;
+      });
+
+      const parentNode = currentNodes.find(
+        (node) => node.id === parentId
+        // (node) => node.data.label === meal.name
+      );
+
+      if (parentNode) {
+        addNodes(parentNode, optionNodes, 130);
+      }
+    },
+    []
+  );
 
   const handleViewIngredientsClick = useCallback(
-    async (meal: { name: string; id: string }) => {
+    async (meal: { name: string; id: string }, parentId: string) => {
       const mealDetails = await getMealDetails(meal.id);
       if (!mealDetails) {
         console.error("No meal details found");
@@ -333,6 +372,7 @@ const FoodExplorerGraph = () => {
         type: "ingredient" as const,
         id: ingredient,
         parentId: meal.name,
+        onClick: () => handleViewMealsByIngredientClick(ingredient),
       }));
       console.log("ingredientList", ingredientList);
       console.log("ingredientNodes", ingredientNodes);
@@ -345,11 +385,10 @@ const FoodExplorerGraph = () => {
       });
 
       const optionNode = currentNodes.find(
-        (node) => node.data.label === "View Ingredients"
+        (node) => node.id === parentId
         // node.id.startsWith(`${parentNode.id}-`)
       );
 
-      console.log("optionNode", optionNode);
       if (optionNode) {
         addNodes(optionNode, ingredientNodes);
       }
@@ -430,6 +469,23 @@ const FoodExplorerGraph = () => {
     try {
       const result = await axios.get(
         `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`
+      );
+      const data = result.data;
+      const meals = data.meals as MealByCategoryData[];
+      return meals.slice(0, 5).map((meal: MealByCategoryData) => ({
+        name: meal.strMeal,
+        id: meal.idMeal,
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+    return [];
+  };
+
+  const getMealsByIngredient = async (ingredient: string) => {
+    try {
+      const result = await axios.get(
+        `https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`
       );
       const data = result.data;
       const meals = data.meals as MealByCategoryData[];

@@ -3,7 +3,8 @@ export interface CustomNodeData {
   type: "explore" | "category" | "option" | "meal" | "ingredient" | "tag";
   id: string;
   parentId: string;
-  onClick?: () => void;
+  nodeId: string;
+  onClick?: (id?: string, parentId?: string) => void;
 }
 
 export interface MealData {
